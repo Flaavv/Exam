@@ -1,0 +1,354 @@
+
+/**
+ * HopScore is a general script to instantiate badges into webpages. Root
+ * namespace where all begin.
+ */
+HopScore = {
+		
+	/**
+	 * Host the management object
+	 */
+	hopscoreManager: null,
+	
+	/**
+	 * Contains the apiKey of the current user
+	 */
+	apiKey : null,
+	
+	/**
+	 * Contains the hash for securing the access to the server
+	 */
+	hash : null,
+	
+	// Available Public Parameters
+	
+	/**
+	 * Define the language of the widgets : fr | en
+	 * HopScore.Module.Resources	
+	 */
+	lang : null,
+	
+	
+	/**
+	 * Template name to be applied every hopbadge of the webpage
+	 * HopScore.Badge.Score
+	 */
+	templateName : '',
+	
+	/**
+	 * Tracking system name : "GA" | "Xiti" | "GAAsync"  | "NoTracker"
+	 * HopScore.Module.Tracker
+	 */
+	trackerProvider : '',
+	
+	/**
+	 * Activate or not badges trackings 
+	 * HopScore.Module.Tracker
+	 */
+	activateTracking : false,
+	
+	/**
+	 * Tracker Id (only necessary for GA) 
+	 * HopScore.Module.Tracker.GA
+	 */
+	trackerID : null,
+	
+	/**
+	 * Activate or not ABTesting 
+	 * HopScore.Module.ABTest
+	 */
+	activateABTesting : false,
+
+	/**
+	 * Array of template names to be activated at an equivalent ratio 
+	 * "None" is a special value to test with/without the service 
+	 * HopScore.Module.ABTest
+	 */
+	templateAlternatives : [],
+	
+	/**
+	 * Activate or not the debugging mode, displaying infos and warnings
+	 * HopScore.Module.Debug
+	 */
+	activateDebug : false,
+  
+  /**
+   * Activate or not the Standalone button
+   */
+   activateStandalone : false,
+   
+   /**
+    * Widget or Standalone (HopSimu)
+    */
+   onlyStandalone : false,
+   
+   /**
+    *  OPTION ONLY FOR DISCOUNTEO
+    *  activate EnergyLabel (Change URL WebService)
+    */
+   energyLabel : false,
+   
+   /**
+    * Option to switch Lytebox Template 
+    * [Standard, StandardOld, PulsatBox, DiscounteoBox, SimpleBox]
+    */
+   lyteboxTemplate : "Standard"
+};
+
+/**
+ * Initialization function that launch the execution of the script
+ * 
+ * @return
+ */
+HopScore.initialize =  function() {
+	
+	try{
+	// Check if IE version is OK
+	if(!isBrowserSupported()) return;
+	if(!isDefined(HopScore.apiKey)
+		||
+		!isDefined(HopScore.hash)
+	) {
+			throw "001";
+	}
+	
+	
+	 DomReady.ready(function() {
+		 try{
+		 HopScore.raiseInitializationCompleted();
+		 } catch(e){
+			 HopScore.hsTraceEx(e);
+		 }
+     });
+	} catch(e){
+		HopScore.hsTraceEx(e);
+	}
+};
+
+
+/* a remplir par le client */
+HopScore.initializationCompleted = function(){
+};
+
+HopScore.raiseInitializationCompleted = function(){
+	if(HopScore.initializationCompleted != null){
+		HopScore.initializationCompleted();
+	}
+};
+
+/**
+ * Call getScoreAvailability in hopscore.manager.js
+ * @param idProduct : (ex : EAN1485234102570)
+ */
+HopScore.getScoreAvailability = function(idProduct) {
+	return false;
+};
+
+function isDefined(variable) {
+	return (variable != null && variable != undefined && variable != "undefined");
+};
+
+/**
+ * Check if IE version is higher than IE 6
+ * @return boolean
+ */
+function isBrowserSupported() {
+	if(/MSIE 6/i.test(navigator.userAgent) || /MSIE 5/i.test(navigator.userAgent))
+	{
+		return false;
+	}
+	return true;
+}
+
+
+Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+
+
+/**
+ * Check if object is instance of given class.
+ * 
+ * @param {Object}
+ *            object Object to check inheritance of.
+ * @param {Function}
+ *            classConstructor Constructor function to check inheritance
+ *            against.
+ * @return Boolean indicating success of comparison.
+ * @type {Boolean}
+ */
+function isInstanceOf(object, classConstructor) {
+  // Check for class metadata
+  if (object.constructor.meta === undefined || classConstructor.meta === undefined) {
+    return object instanceof classConstructor; // Use standard inheritance test
+  }
+ 
+  // Use inheritance metadata to perform instanceof comparison
+  return object.constructor.meta.fromClasses[classConstructor.meta.index] !== undefined;
+}
+ 
+
+
+
+// DOM Ready function
+(function(){
+
+    var DomReady = window.DomReady = {};
+
+	// Everything that has to do with properly supporting our document ready
+	// event. Brought over from the most awesome jQuery.
+
+    var userAgent = navigator.userAgent.toLowerCase();
+
+    // Figure out what browser is being used
+    var browser = {
+    	version: (userAgent.match( /.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/ ) || [])[1],
+    	safari: /webkit/.test(userAgent),
+    	opera: /opera/.test(userAgent),
+    	msie: (/msie/.test(userAgent)) && (!/opera/.test( userAgent )),
+    	mozilla: (/mozilla/.test(userAgent)) && (!/(compatible|webkit)/.test(userAgent))
+    };    
+
+	var readyBound = false;	
+	var isReady = false;
+	var readyList = [];
+
+	// Handle when the DOM is ready
+	function domReady() {
+		// Make sure that the DOM is not already loaded
+		if(!isReady) {
+			// Remember that the DOM is ready
+			isReady = true;
+        
+	        if(readyList) {
+	            for(var fn = 0; fn < readyList.length; fn++) {
+	                readyList[fn].call(window, []);
+	            }
+            
+	            readyList = [];
+	        }
+		}
+	};
+
+	// From Simon Willison. A safe way to fire onload w/o screwing up everyone
+	// else.
+	function addLoadEvent(func) {
+	  var oldonload = window.onload;
+	  if (typeof window.onload != 'function') {
+	    window.onload = func;
+	  } else {
+	    window.onload = function() {
+	      if (oldonload) {
+	        oldonload();
+	      }
+	      func();
+	    };
+	  }
+	};
+
+	// does the heavy work of working through the browsers idiosyncracies (let's
+	// call them that) to hook onload.
+	function bindReady() {
+		if(readyBound) {
+		    return;
+	    }
+	
+		readyBound = true;
+
+		// Mozilla, Opera (see further below for it) and webkit nightlies
+		// currently support this event
+		if (document.addEventListener && !browser.opera) {
+			// Use the handy event callback
+			document.addEventListener("DOMContentLoaded", domReady, false);
+		}
+
+		// If IE is used and is not in a frame
+		// Continually check to see if the document is ready
+		if (browser.msie && window == top) (function(){
+			if (isReady) return;
+			try {
+				// If IE is used, use the trick by Diego Perini
+				// http://javascript.nwbox.com/IEContentLoaded/
+				document.documentElement.doScroll("left");
+			} catch(error) {
+				setTimeout(arguments.callee, 0);
+				return;
+			}
+			// and execute any waiting functions
+		    domReady();
+		})();
+
+		if(browser.opera) {
+			document.addEventListener( "DOMContentLoaded", function () {
+				if (isReady) return;
+				for (var i = 0; i < document.styleSheets.length; i++)
+					if (document.styleSheets[i].disabled) {
+						setTimeout( arguments.callee, 0 );
+						return;
+					}
+				// and execute any waiting functions
+	            domReady();
+			}, false);
+		}
+
+		if(browser.safari) {
+		    var numStyles;
+			(function(){
+				if (isReady) return;
+				if (document.readyState != "loaded" && document.readyState != "complete") {
+					setTimeout( arguments.callee, 0 );
+					return;
+				}
+				if (numStyles === undefined) {
+	                var links = document.getElementsByTagName("link");
+	                for (var i=0; i < links.length; i++) {
+	                	if(links[i].getAttribute('rel') == 'stylesheet') {
+	                	    numStyles++;
+	                	}
+	                }
+	                var styles = document.getElementsByTagName("style");
+	                numStyles += styles.length;
+				}
+				if (document.styleSheets.length != numStyles) {
+					setTimeout( arguments.callee, 0 );
+					return;
+				}
+			
+				// and execute any waiting functions
+				domReady();
+			})();
+		}
+
+		// A fallback to window.onload, that will always work
+	    addLoadEvent(domReady);
+	};
+
+	// This is the public function that people can use to hook up ready.
+	DomReady.ready = function(fn, args) {
+		// Attach the listeners
+		bindReady();
+    
+		// If the DOM is already ready
+		if (isReady) {
+			// Execute the function immediately
+			fn.call(window, []);
+	    } else {
+			// Add the function to the wait list
+	        readyList.push( function() { return fn.call(window, []); } );
+	    }
+	};
+    
+	bindReady();
+	
+})();
+
+
+// Debug Placeholders
+HopScore.hsTraceEx = function(){};
+HopScore.hsTraceE = function(){};
+HopScore.hsTraceW = function(){};
+HopScore.hsTraceI = function(){};
